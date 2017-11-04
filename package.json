@@ -1,0 +1,14 @@
+{
+  "name": "ml-js",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "convnetjs": "^0.3.0",
+    "deeplearn": "^0.3.3",
+    "lodash": "^4.17.4",
+    "require-csv": "0.0.1"
+  }
+}
