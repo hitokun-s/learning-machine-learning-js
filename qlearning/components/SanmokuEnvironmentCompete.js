@@ -32,6 +32,10 @@ class SanmokuEnvironmentCompete {
   // 勝利判定は、動的計画法の匂いがする。。。
   getWinner(state) {
 
+    if (typeof state === 'string' || state instanceof String){
+      state = state.split("");
+    }
+    
     var getIndex = (row, col) => {
       return this.size * row + col;
     }
@@ -64,7 +68,7 @@ class SanmokuEnvironmentCompete {
         return true;
       }
       if (_.every(_.range(n), (t => {
-          return state[getIndex(startRow + n - t, startCol + t)] == target;
+          return state[getIndex(startRow + t, startCol + n - 1 - t)] == target;
         }))) {
         return true;
       }
@@ -84,6 +88,8 @@ class SanmokuEnvironmentCompete {
     for (var target = 1; target <= 2; target++) {
       for (var row = 0; row <= this.size - this.n; row++) {
         for (var col = 0; col <= this.size - this.n; col++) {
+          
+          // console.log("start window ----------", row, col);
           if (test(target, row, col, this.n)) {
             return target;
           }
@@ -91,6 +97,43 @@ class SanmokuEnvironmentCompete {
       }
     }
     return null;
+  }
+  
+  stepWithoutLearn(state, action){
+    
+    if (typeof state === 'string' || state instanceof String){
+      state = state.split("");
+    }
+
+    // actionはインデックス
+    state[action] = 1;
+    var winner = this.getWinner(state);
+    if (winner) {
+      return {finish: true, state: state.join(""), reward: winner == 1 ? 100 : -100};
+    }
+    var actions = this.getPossibleActions(state.join(""));
+
+    // 引き分け
+    if (actions.length == 0) {
+      return {finish: true, state: state.join(""), reward: 0};
+    }
+
+    // 競争モードなので、ここが変わる！ランダムに選ぶのではなく、同時に学習中の、内部Agentが手を考える。
+    // var action = this.innerAgent.step(state);
+    var action = this.innerAgent.bestAction(state);
+    state[action] = 2;
+
+    var winner = this.getWinner(state);
+    if (winner) {
+      return {finish: true, state: state.join(""), reward: winner == 1 ? 100 : -100};
+    }
+
+    // 引き分け
+    if (this.getPossibleActions(state.join("")).length == 0) {
+      return {finish: true, state: state.join(""), reward: 0};
+    }
+
+    return {finish: false, state: state.join(""), reward: 0};
   }
 
   // actionを実行し、結果の状態、報酬、ゴールに達したか（例；勝負がついたか）などを返す
@@ -119,6 +162,7 @@ class SanmokuEnvironmentCompete {
 
     // 競争モードなので、ここが変わる！ランダムに選ぶのではなく、同時に学習中の、内部Agentが手を考える。
     var action = this.innerAgent.step(state);
+    // var action = this.innerAgent.bestAction(state);
     state[action] = 2;
 
     var winner = this.getWinner(state);

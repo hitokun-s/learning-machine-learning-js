@@ -46,8 +46,13 @@ class SanmokuAgent extends Agent {
     step(s) {
         // act according to epsilon greedy policy
 
+      if(Array.isArray(s)){
+        s = s.join("");
+      }
+
         var poss = this.env.getPossibleActions(s);
-        console.log(s, poss);
+        // console.log(s, poss);
+      
 
         // Pの初期値は、各アクション均等割
         if(this.P[s] === undefined){
@@ -79,7 +84,7 @@ class SanmokuAgent extends Agent {
         this.s1 = s;
         this.a1 = action;
 
-        console.log("s0", this.s0, "s1", this.s1);
+        // console.log("s0", this.s0, "s1", this.s1);
 
         return action;
     }
@@ -132,6 +137,10 @@ class SanmokuAgent extends Agent {
     }
 
     updatePolicy(s) {
+        
+        if(Array.isArray(s)){
+            s = s.join("");
+        }
 
         var poss = this.env.getPossibleActions(s);
 
@@ -182,6 +191,10 @@ class SanmokuAgent extends Agent {
     }
 
     bestAction(state){
+        
+        if(Array.isArray(state)){
+            state = state.join("");
+        }
 
         var stateRewards = this.Q[state] || {};
         var bestAction = null;
