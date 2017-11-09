@@ -27,9 +27,14 @@ var agent = new Agent(env, opt);
 let initState = _.range(size * size).map(() => "0").join("");
 // 後手にしたい場合
 const getInitState = function(handy){
-  var addition = _.range(handy).map(() => "2").join("");
-  let initState = addition + _.range(size * size - handy).map(() => "0").join("");
-  return initState;
+ var  arr = _.range(size * size).map(() => "0");
+  var indexes = _.sampleSize(_.range(size * size), handy);
+  
+  indexes.forEach(i => {
+    arr[i] = "2";
+  });
+
+  return arr.join("");
 };
 
 const learn = (steps) => {
@@ -66,20 +71,20 @@ const learn = (steps) => {
           // this.net.b1 = new R.Mat(this.nh, 1, 0, 0.01);
           // this.net.W2 = new R.RandMat(this.na, this.nh, 0, 0.01);
           // this.net.b2 = new R.Mat(this.na, 1, 0, 0.01);
-          fs.writeFileSync("./q.json", JSON.stringify(R.netToJSON(agent.net)));
-          fs.writeFileSync("./qe.json", JSON.stringify(R.netToJSON(env.innerAgent.net)));
+          fs.writeFileSync(`./q-${size}-${n}.json`, JSON.stringify(R.netToJSON(agent.net)));
+          fs.writeFileSync(`./qe-${size}-${n}.json`, JSON.stringify(R.netToJSON(env.innerAgent.net)));
         }
     }
 }
 
-if (fs.existsSync("./q.json")) {
+if (fs.existsSync(`./q-${size}-${n}.json`)) {
   console.log("file found!");
-  agent.net = R.netFromJSON(JSON.parse(fs.readFileSync("./q.json")));
-  env.innerAgent.net = R.netFromJSON(JSON.parse(fs.readFileSync("./qe.json")));
+  agent.net = R.netFromJSON(JSON.parse(fs.readFileSync(`./q-${size}-${n}.json`)));
+  env.innerAgent.net = R.netFromJSON(JSON.parse(fs.readFileSync(`./qe-${size}-${n}.json`)));
 }
 
 console.log("learn!");
-learn(10000);
+// learn(10000);
 
 const game = ()=>{
   
@@ -106,13 +111,24 @@ const game = ()=>{
     // console.log("game state & winner", res.state, env.getWinner(res.state));
 
     s = res.state;
+    
+    const draw = function(d){
+      if(d == "1" || d == 1){
+        return "○";
+      }else if(d == "2" || d == 2){
+        return "●";
+      }else{
+        return "　"
+      }
+    };
+    
     if(winner){
       // 見やすくする
       console.log("win state");
-      _.chunk(res.state, size).forEach(c => console.log(c));
+      _.chunk(res.state, size).forEach(c => console.log(c.map(draw)));
     }else{
       console.log("no winner yet");
-      _.chunk(res.state, size).forEach(c => console.log(c));
+      _.chunk(res.state, size).forEach(c => console.log(c.map(draw)));
     }
   }
   console.log(res.state);
