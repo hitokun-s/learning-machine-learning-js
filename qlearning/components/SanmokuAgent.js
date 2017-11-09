@@ -4,15 +4,16 @@ const _ = require("lodash");
 // 参考：『実装ディープラーニング』
 class SanmokuAgent extends Agent {
 
-    constructor(env) {
+    constructor(env, opt) {
         super();
+        opt = opt || {};
         this.gamma = 0.8;
         this.env = env;
         this.Q = {};
         this.P = {}; // policy distribution \pi(s,a) // Qと同じ、[state][action]という構造になる
 
         this.smooth_policy_update = true;
-        this.epsilon = 0.1;
+        this.epsilon = opt.eps || 0.1;
         this.alpha = 0.01;
     }
 

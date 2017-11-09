@@ -6,8 +6,8 @@ const _ = require("lodash");
 const fs = require('fs');
 
 
-const size = 8;
-const n = 4;
+const size = 3;
+const n = 3;
 
 var env = new SanmokuEnvironment(size, n);
 
@@ -53,7 +53,7 @@ if(fs.existsSync("./q.json")){
     agent.Q = JSON.parse(fs.readFileSync("./q.json"));
 }else{
     console.log("learn!");
-    learn(100000);
+    learn(10000);
     fs.writeFileSync("./q.json", JSON.stringify(agent.Q));
 }
 
@@ -68,15 +68,10 @@ const game = ()=>{
     var s = initState;
     var res;
     var winner;
-    while (!(res && res.finish && winner)) {
+    while (!(res && res.finish)) {
         var action = agent.bestAction(s); // s is an array of length 8
       
         console.log("best action", action);
-        
-        if(!action){
-            console.log(s);
-            console.log(env.getWinner(s));
-        }
 
         res = env.step(s, action);
         winner = env.getWinner(res.state);
