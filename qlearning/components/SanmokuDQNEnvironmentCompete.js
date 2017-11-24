@@ -12,14 +12,16 @@ class SanmokuEnvironmentCompete {
     // this.states = [0,0,0,0,0,0,0,0,0];
     this.size = size;
     this.n = n;
-    this.innerAgent = new Agent(this);
+    this.innerAgent = new Agent(this, {}, 2);
     this.innerAgent.init();
+    this.history = [];
   }
 
   init() {
     // 状態の種類、アクションの種類などを定義？
     // this.states = [0,0,0,0,0,0,0,0,0];
     this.innerAgent.init();
+    this.history = [];
   }
 
   // episodeを開始
@@ -107,6 +109,9 @@ class SanmokuEnvironmentCompete {
 
     // actionはインデックス
     state[action] = 1;
+
+    this.saveState(state);
+    
     var winner = this.getWinner(state);
     if (winner) {
       return {finish: true, state: state.join(""), reward: winner == 1 ? 100 : -100};
@@ -123,6 +128,8 @@ class SanmokuEnvironmentCompete {
     var action = this.innerAgent.bestAction(state);
     state[action] = 2;
 
+    this.saveState(state);
+
     var winner = this.getWinner(state);
     if (winner) {
       return {finish: true, state: state.join(""), reward: winner == 1 ? 100 : -100};
@@ -134,6 +141,14 @@ class SanmokuEnvironmentCompete {
     }
 
     return {finish: false, state: state.join(""), reward: 0};
+  }
+  
+  saveState(state){
+    // 最新のstateを先頭に追加していく
+    this.history.unshift(Array.isArray(state) ? state.join(""): state);
+    if(this.history.length > 10){
+      this.history.pop();
+    }
   }
 
   // actionを実行し、結果の状態、報酬、ゴールに達したか（例；勝負がついたか）などを返す
@@ -147,6 +162,9 @@ class SanmokuEnvironmentCompete {
 
     // actionはインデックス
     state[action] = 1;
+
+    this.saveState(state);
+    
     var winner = this.getWinner(state);
     if (winner) {
       this.innerAgent.learn(winner == 2 ? 100 : -100);
@@ -164,6 +182,8 @@ class SanmokuEnvironmentCompete {
     var action = this.innerAgent.step(state);
     // var action = this.innerAgent.bestAction(state);
     state[action] = 2;
+
+    this.saveState(state);
 
     var winner = this.getWinner(state);
     if (winner) {

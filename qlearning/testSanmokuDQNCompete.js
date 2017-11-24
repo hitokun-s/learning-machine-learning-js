@@ -17,7 +17,8 @@ var env = new SanmokuEnvironmentCompete(size, n);
 
 
 var opt = {eps: 0.1} // see full options on DQN page
-var agent = new Agent(env, opt);
+var agent = new Agent(env, opt, 1);
+env.innerAgent.net = agent.net;
 
 // agent.init(_.sample(["0","1","2","3","4"]));
 // var res = agent.step(); // s is an array of length 8
@@ -39,7 +40,7 @@ const getInitState = function(handy){
 
 const learn = (steps) => {
   
-    var s = initState;
+    var s = getInitState(steps % 2);
     agent.init();
     while (steps--){
 
@@ -60,35 +61,47 @@ const learn = (steps) => {
             agent.learn(res.reward);
           }
 
-            s = initState;
+            s = getInitState(steps % 2);
             agent.init();
             env.init(); // この中でenvの内部Agentもinit()する！
         }
         
-        if(steps % 1000 == 0){
-          console.log("saev file!");
+        if(steps % 100 == 0){
+          console.log("save file!");
           // this.net.W1 = new R.RandMat(this.nh, this.ns, 0, 0.01);
           // this.net.b1 = new R.Mat(this.nh, 1, 0, 0.01);
           // this.net.W2 = new R.RandMat(this.na, this.nh, 0, 0.01);
           // this.net.b2 = new R.Mat(this.na, 1, 0, 0.01);
-          fs.writeFileSync(`./q-${size}-${n}.json`, JSON.stringify(R.netToJSON(agent.net)));
-          fs.writeFileSync(`./qe-${size}-${n}.json`, JSON.stringify(R.netToJSON(env.innerAgent.net)));
+          
+          if(!fs.existsSync(`./q-${size}-${n}.json`)){
+            fs.writeFileSync(`./q-${size}-${n}.json`, JSON.stringify(agent.net.toJSON()));
+          }else{
+            if(gotSmarter()){
+              console.log("Got smarter!");
+              if(fs.existsSync(`./q-${size}-${n}.json`)){
+                fs.renameSync(`./q-${size}-${n}.json`, `./q-${size}-${n}-1.json`);
+              }
+              fs.writeFileSync(`./q-${size}-${n}.json`, JSON.stringify(agent.net.toJSON()));
+            }else{
+              console.log("...failed to get smarter...");
+              // // リセットしてやり直し
+              // agent.net.fromJSON(JSON.parse(fs.readFileSync(`./q-${size}-${n}.json`)));
+              // env.innerAgent.net = agent.net;
+            } 
+          }
         }
     }
 }
 
 if (fs.existsSync(`./q-${size}-${n}.json`)) {
-  console.log("file found!");
-  agent.net = R.netFromJSON(JSON.parse(fs.readFileSync(`./q-${size}-${n}.json`)));
-  env.innerAgent.net = R.netFromJSON(JSON.parse(fs.readFileSync(`./qe-${size}-${n}.json`)));
+  console.log("Q file found!");
+  agent.net.fromJSON(JSON.parse(fs.readFileSync(`./q-${size}-${n}.json`)));
+  env.innerAgent.net = agent.net;
 }
 
-console.log("learn!");
-// learn(10000);
-
-const game = ()=>{
+const game = (i)=>{
   
-  var s = getInitState(4);
+  var s = getInitState(i % 2);
   console.log("start new game!----------------------", s);
   
   var res;
@@ -135,12 +148,32 @@ const game = ()=>{
   return env.getWinner(res.state);
 }
 
-var res = [];
-_.times(100, ()=>{
-  res.push(game());
-});
+var gotSmarter = function(){
+  env.innerAgent.net.fromJSON(JSON.parse(fs.readFileSync(`./q-${size}-${n}.json`)));
 
-console.log("win rate:", _.countBy(res));
+  var res = [];
+  _.times(20, (i)=>{
+    res.push(game(i));
+  });
+  res = _.countBy(res);
+  console.log(res);
+  
+  return res["1"] >= res["2"] * 2;
+}
+
+console.log("learn!");
+learn(10000000000);
+// gotSmarter();
+
+// env.innerAgent.net.fromJSON(JSON.parse(fs.readFileSync(`./q-${size}-${n}-1.json`)));
+//
+// var res = [];
+// _.times(20, (i)=>{
+//   res.push(game(i));
+// });
+//
+// console.log("win rate:", _.countBy(res));
+// console.log(_.countBy(res, "1"));
 
 
 
